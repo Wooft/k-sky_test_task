@@ -1,0 +1,159 @@
+version: '3.8'
+
+services:
+  producer:
+    build:
+      context: ./producer
+    env_file:
+      - .env_dev_producer
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
+             gunicorn producer.wsgi:application --bind 0.0.0.0:8002"
+    networks:
+      - test_project
+    depends_on:
+      - db
+
+  consumer:
+    build:
+      context: ./consumer
+    env_file:
+      - .env_dev_consumer
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
+             gunicorn consumer.wsgi:application --bind 0.0.0.0:8003"
+    networks:
+      - test_project
+    depends_on:
+      - two_db
+      - kafka
+      - producer
+      - zookeeper
+
+  kafka_consumer:
+    build:
+      context: ./consumer
+    env_file:
+      - .env_dev_consumer
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
+             sleep 15 &&
+             python manage.py startconsumer"
+    networks:
+      - test_project
+    depends_on:
+      - two_db
+      - kafka
+      - producer
+      - zookeeper
+
+  celery:
+    env_file:
+      - .env_dev_consumer
+    build:
+      context: ./consumer
+    command:  celery -A consumer worker -l info
+    depends_on:
+      - two_db
+      - consumer
+      - redis
+    networks:
+      - test_project
+
+  beat:
+    build:
+      context: ./consumer
+    env_file:
+      - .env_dev_consumer
+    command: celery -A consumer beat --loglevel=info
+    networks:
+      - test_project
+    depends_on:
+      - celery
+      - consumer
+
+  db:
+    image: postgres:15.4-alpine3.18
+    expose:
+      - 5432
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - test_project
+
+  two_db:
+    image: postgres:15.4-alpine3.18
+    expose:
+      - 5434
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME_2}
+    volumes:
+      - postgres_data_2:/var/lib/postgresql/data/
+    networks:
+      - test_project
+    depends_on:
+      - kafka
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - test_project
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - test_project
+
+  redis:
+    image: redis
+    networks:
+      - test_project
+    depends_on:
+      - two_db
+
+  nginx:
+    build: ./nginx
+    ports:
+      - 80:80
+    depends_on:
+      - beat
+    volumes:
+      - ./producer/app/static:/static/
+      - ./consumer/app/static:/static/consumer
+    networks:
+      - test_project
+
+volumes:
+  postgres_data:
+  postgres_data_2:
+
+networks:
+  test_project:

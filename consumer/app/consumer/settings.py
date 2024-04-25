@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'analytics',
     'rest_framework',
+    'rest_framework.authtoken',
     'drf_yasg',
 ]
 
@@ -135,3 +136,8 @@ CELERY_BROKER_URL = config('REDIS_HOST')
 CELERY_RESULT_BACKEND = config('REDIS_HOST')
 CELERY_TIMEZONE = 'Europe/Moscow'  # Установите ваш часовой пояс
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}

@@ -1,6 +1,6 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
-
+from rest_framework.permissions import IsAuthenticated
 from analytics.models import Receipt, Place, CategoryPlace
 from analytics.serializers import ReceiptSerializer, PlaceSerializer, CategoryPlaceSerializer
 
@@ -8,7 +8,7 @@ from analytics.serializers import ReceiptSerializer, PlaceSerializer, CategoryPl
 class AnalyticsView(ModelViewSet):
     queryset = Place.objects.all()
     serializer_class = PlaceSerializer
-
+    permission_classes = [IsAuthenticated]
     def list(self, request, *args, **kwargs):
         """
         Получает и возвращает список мест покупок с дополнительной аналитикой по категориям.

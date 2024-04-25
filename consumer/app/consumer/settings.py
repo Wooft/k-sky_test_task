@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-63s_yi03i@qq051h3=h0o)n!j&5$gx2mv)f%7ugi^t18v&jr(u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', 'localhost').split(',')
 
 
 # Application definition
@@ -119,7 +119,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
@@ -135,11 +134,3 @@ CELERY_BROKER_URL = config('REDIS_HOST')
 CELERY_RESULT_BACKEND = config('REDIS_HOST')
 CELERY_TIMEZONE = 'Europe/Moscow'  # Установите ваш часовой пояс
 
-# from celery.schedules import crontab
-#
-# CELERY_BEAT_SCHEDULE = {
-#     'my-scheduled-task-everyday-midnight': {
-#         'task': 'analytics.tasks.my_scheduled_task',
-#         'schedule': crontab(hour=0, minute=0),  # Запуск каждый день в полночь
-#     },
-# }

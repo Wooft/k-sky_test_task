@@ -10,6 +10,8 @@ services:
       sh -c "python manage.py collectstatic --noinput &&
              python manage.py migrate &&
              gunicorn producer.wsgi:application --bind 0.0.0.0:8002"
+    volumes:
+      - producer_static:/usr/src/app/static
     networks:
       - test_project
     depends_on:
@@ -24,6 +26,8 @@ services:
       sh -c "python manage.py collectstatic --noinput &&
              python manage.py migrate &&
              gunicorn consumer.wsgi:application --bind 0.0.0.0:8003"
+    volumes:
+      - consumer_static:/usr/src/app/static
     networks:
       - test_project
     depends_on:
@@ -38,9 +42,7 @@ services:
     env_file:
       - .env_dev_consumer
     command: >
-      sh -c "python manage.py collectstatic --noinput &&
-             python manage.py migrate &&
-             sleep 15 &&
+      sh -c "sleep 15 &&
              python manage.py startconsumer"
     networks:
       - test_project
@@ -144,16 +146,18 @@ services:
     ports:
       - 80:80
     depends_on:
+      - producer
       - beat
     volumes:
-      - ./producer/app/static:/static/
-      - ./consumer/app/static:/static/consumer
+      - consumer_static:/static/consumer
+      - producer_static:/static/
     networks:
       - test_project
 
 volumes:
   postgres_data:
   postgres_data_2:
-
+  producer_static:
+  consumer_static:
 networks:
   test_project:

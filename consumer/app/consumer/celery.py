@@ -16,7 +16,7 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'every': { 
         'task': 'analytics.tasks.analytics_calculation',
-        'schedule': crontab(),
+        'schedule': crontab(hour='*'),
     },
 
 }

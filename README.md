@@ -7,13 +7,13 @@
 
 ### Клонирование проекта
 Для клонирования используйте команду:  
-`bash  
-git clone https://github.com/Wooft/k-skytesttask.git`
+bash  
+`git clone https://github.com/Wooft/k-skytesttask.git`
 
 ### Сборка и запуск проекта
 Для сборки и запуска проекта выполните следующую команду в корневой директории проекта:  
-`bash  
-docker-compose up -d`
+bash  
+`docker-compose up -d`
 
 ## Использование
 
